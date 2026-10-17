@@ -1,0 +1,1027 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SnippetVault — Developer Code Snippet Manager</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg: #0d1117;
+  --bg-card: #161b22;
+  --bg-input: #0d1117;
+  --border: #30363d;
+  --text: #c9d1d9;
+  --text-muted: #8b949e;
+  --accent: #58a6ff;
+  --accent-hover: #79c0ff;
+  --danger: #f85149;
+  --danger-hover: #ff6b63;
+  --success: #3fb950;
+  --warning: #d2991d;
+  --tag-bg: #1f2a37;
+  --tag-text: #58a6ff;
+  --code-bg: #0d1117;
+  --scrollbar: #30363d;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  height: 100vh;
+  display: flex;
+  overflow: hidden;
+}
+
+/* Sidebar */
+.sidebar {
+  width: 260px;
+  min-width: 260px;
+  background: var(--bg-card);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  padding: 16px;
+  overflow-y: auto;
+}
+
+.sidebar-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 20px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.sidebar-header .logo {
+  font-size: 24px;
+  font-weight: 700;
+  background: linear-gradient(135deg, #58a6ff, #3fb950);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.sidebar-header .version {
+  font-size: 11px;
+  color: var(--text-muted);
+  background: var(--tag-bg);
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.sidebar-section {
+  margin-bottom: 16px;
+}
+
+.sidebar-section h3 {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+}
+
+.sidebar-btn {
+  display: block;
+  width: 100%;
+  padding: 8px 12px;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text);
+  cursor: pointer;
+  text-align: left;
+  font-size: 13px;
+  margin-bottom: 4px;
+  transition: all 0.15s;
+}
+
+.sidebar-btn:hover {
+  background: #1f2a37;
+  border-color: var(--accent);
+}
+
+.sidebar-btn.active {
+  background: var(--accent);
+  color: #fff;
+  border-color: var(--accent);
+}
+
+.tag-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.tag-chip {
+  padding: 3px 8px;
+  font-size: 11px;
+  background: var(--tag-bg);
+  color: var(--tag-text);
+  border-radius: 12px;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: all 0.15s;
+}
+
+.tag-chip:hover, .tag-chip.active {
+  border-color: var(--accent);
+  background: #1f3a52;
+}
+
+.stats {
+  font-size: 12px;
+  color: var(--text-muted);
+  line-height: 1.6;
+}
+
+.stats strong {
+  color: var(--accent);
+}
+
+/* Main */
+.main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* Toolbar */
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 20px;
+  background: var(--bg-card);
+  border-bottom: 1px solid var(--border);
+}
+
+.search-box {
+  flex: 1;
+  max-width: 400px;
+  padding: 8px 12px;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text);
+  font-size: 13px;
+  outline: none;
+}
+
+.search-box:focus {
+  border-color: var(--accent);
+}
+
+.toolbar-btn {
+  padding: 8px 16px;
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+  transition: background 0.15s;
+  white-space: nowrap;
+}
+
+.toolbar-btn:hover {
+  background: var(--accent-hover);
+}
+
+.toolbar-btn.outline {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text);
+}
+
+.toolbar-btn.outline:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.toolbar-btn.danger {
+  background: transparent;
+  border: 1px solid var(--danger);
+  color: var(--danger);
+}
+
+.toolbar-btn.danger:hover {
+  background: var(--danger);
+  color: #fff;
+}
+
+.toolbar-right {
+  margin-left: auto;
+  display: flex;
+  gap: 8px;
+}
+
+.snippet-count {
+  font-size: 12px;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+/* Content area */
+.content {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+}
+
+/* Snippet list */
+.list-panel {
+  width: 380px;
+  min-width: 300px;
+  border-right: 1px solid var(--border);
+  overflow-y: auto;
+  background: var(--bg);
+}
+
+.list-panel::-webkit-scrollbar { width: 6px; }
+.list-panel::-webkit-scrollbar-track { background: transparent; }
+.list-panel::-webkit-scrollbar-thumb { background: var(--scrollbar); border-radius: 3px; }
+
+.snippet-item {
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+  transition: background 0.1s;
+}
+
+.snippet-item:hover { background: #161b22; }
+.snippet-item.active { background: #1a2332; border-left: 3px solid var(--accent); }
+
+.snippet-item .title {
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.snippet-item .meta {
+  display: flex;
+  gap: 8px;
+  font-size: 11px;
+  color: var(--text-muted);
+  align-items: center;
+}
+
+.snippet-item .lang-badge {
+  padding: 1px 6px;
+  background: #1f2a37;
+  border-radius: 4px;
+  font-size: 10px;
+  color: var(--accent);
+}
+
+.snippet-item .preview {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-top: 6px;
+  font-family: 'SF Mono', 'Fira Code', monospace;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Detail panel */
+.detail-panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.empty-state {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  text-align: center;
+  padding: 40px;
+}
+
+.empty-state .icon {
+  font-size: 48px;
+  margin-bottom: 16px;
+  opacity: 0.4;
+}
+
+.empty-state h2 {
+  font-size: 18px;
+  margin-bottom: 8px;
+  color: var(--text);
+}
+
+.empty-state p {
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+/* Editor */
+.editor-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  overflow: hidden;
+}
+
+.editor-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.editor-header input {
+  padding: 6px 10px;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text);
+  font-size: 14px;
+  outline: none;
+  font-family: inherit;
+}
+
+.editor-header input:focus {
+  border-color: var(--accent);
+}
+
+.title-input {
+  flex: 1;
+  min-width: 200px;
+  font-weight: 600;
+}
+
+.lang-select {
+  padding: 6px 10px;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text);
+  font-size: 13px;
+  outline: none;
+  cursor: pointer;
+}
+
+.lang-select:focus {
+  border-color: var(--accent);
+}
+
+.tags-input {
+  width: 100%;
+  padding: 6px 10px;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text);
+  font-size: 13px;
+  outline: none;
+  font-family: inherit;
+}
+
+.tags-input:focus {
+  border-color: var(--accent);
+}
+
+.editor-actions {
+  display: flex;
+  gap: 8px;
+  margin-left: auto;
+}
+
+.editor-actions button {
+  padding: 6px 14px;
+  font-size: 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text);
+  transition: all 0.15s;
+}
+
+.editor-actions button:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.editor-actions button.save {
+  background: var(--success);
+  border-color: var(--success);
+  color: #fff;
+}
+
+.editor-actions button.save:hover {
+  opacity: 0.9;
+}
+
+.editor-actions button.delete-btn {
+  color: var(--danger);
+  border-color: transparent;
+}
+
+.editor-actions button.delete-btn:hover {
+  background: #2d1517;
+  border-color: var(--danger);
+}
+
+.code-editor {
+  flex: 1;
+  padding: 0;
+  position: relative;
+}
+
+.code-editor textarea {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  background: var(--code-bg);
+  color: var(--text);
+  border: none;
+  padding: 20px;
+  font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+  font-size: 13px;
+  line-height: 1.6;
+  resize: none;
+  outline: none;
+  tab-size: 2;
+}
+
+.copy-btn {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  padding: 4px 10px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 11px;
+  z-index: 2;
+}
+
+.copy-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.copy-btn.copied {
+  border-color: var(--success);
+  color: var(--success);
+}
+
+/* Toast */
+.toast {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  padding: 12px 20px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text);
+  font-size: 13px;
+  opacity: 0;
+  transform: translateY(20px);
+  transition: all 0.3s;
+  pointer-events: none;
+  z-index: 1000;
+}
+
+.toast.show {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.toast.success {
+  border-color: var(--success);
+}
+
+.toast.error {
+  border-color: var(--danger);
+}
+
+/* Modal */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 999;
+}
+
+.modal {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 24px;
+  width: 500px;
+  max-width: 90vw;
+  max-height: 80vh;
+  overflow-y: auto;
+}
+
+.modal h2 {
+  font-size: 18px;
+  margin-bottom: 16px;
+}
+
+.modal textarea {
+  width: 100%;
+  min-height: 200px;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text);
+  padding: 12px;
+  font-family: monospace;
+  font-size: 12px;
+  resize: vertical;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  margin-top: 16px;
+}
+
+.modal-actions button {
+  padding: 8px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text);
+}
+
+.modal-actions button.primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+
+/* Responsive */
+@media (max-width: 800px) {
+  .list-panel { width: 100%; min-width: unset; }
+  .detail-panel { display: none; }
+  .detail-panel.open { display: flex; position: absolute; inset: 0; z-index: 100; }
+}
+</style>
+</head>
+<body>
+
+<!-- Sidebar -->
+<aside class="sidebar">
+  <div class="sidebar-header">
+    <span class="logo">&#x1f4ce; SnippetVault</span>
+    <span class="version">v1.0.0</span>
+  </div>
+
+  <div class="sidebar-section">
+    <button class="sidebar-btn active" id="btn-all-snippets">&#x1f4c4; All Snippets</button>
+    <button class="sidebar-btn" id="btn-new">&#x2795; New Snippet</button>
+  </div>
+
+  <div class="sidebar-section">
+    <h3>Tags</h3>
+    <div class="tag-list" id="tag-filter-list"></div>
+  </div>
+
+  <div class="sidebar-section">
+    <h3>Actions</h3>
+    <button class="sidebar-btn" id="btn-export">&#x1f4e4; Export All</button>
+    <button class="sidebar-btn" id="btn-import">&#x1f4e5; Import</button>
+  </div>
+
+  <div class="sidebar-section" style="margin-top: auto;">
+    <h3>Stats</h3>
+    <div class="stats" id="stats-box">
+      Loading...
+    </div>
+  </div>
+</aside>
+
+<!-- Main -->
+<main class="main">
+  <div class="toolbar">
+    <input type="text" class="search-box" id="search-input" placeholder="Search snippets... (title, code, tags, language)">
+    <button class="toolbar-btn" id="btn-new-top">+ New</button>
+    <span class="snippet-count" id="count-label">0 snippets</span>
+  </div>
+
+  <div class="content">
+    <!-- Snippet List -->
+    <div class="list-panel" id="snippet-list"></div>
+
+    <!-- Detail / Editor -->
+    <div class="detail-panel" id="detail-panel">
+      <div class="empty-state" id="empty-state">
+        <div class="icon">&#x1f4ce;</div>
+        <h2>Welcome to SnippetVault</h2>
+        <p>
+          Your personal code snippet manager.<br>
+          Create a new snippet or select one from the list.<br><br>
+          <strong>Tip:</strong> All data is stored locally in <code>snippets.json</code>.
+        </p>
+      </div>
+
+      <div class="editor-container" id="editor" style="display:none;">
+        <div class="editor-header">
+          <input type="text" class="title-input" id="edit-title" placeholder="Snippet title...">
+          <select class="lang-select" id="edit-language">
+            <option value="plaintext">Plain Text</option>
+            <option value="javascript">JavaScript</option>
+            <option value="typescript">TypeScript</option>
+            <option value="python">Python</option>
+            <option value="html">HTML</option>
+            <option value="css">CSS</option>
+            <option value="sql">SQL</option>
+            <option value="bash">Bash</option>
+            <option value="json">JSON</option>
+            <option value="yaml">YAML</option>
+            <option value="markdown">Markdown</option>
+            <option value="rust">Rust</option>
+            <option value="go">Go</option>
+            <option value="php">PHP</option>
+            <option value="ruby">Ruby</option>
+            <option value="java">Java</option>
+            <option value="csharp">C#</option>
+            <option value="cpp">C++</option>
+          </select>
+          <input type="text" class="tags-input" id="edit-tags" placeholder="Tags: comma-separated (e.g. react, api, hooks)" style="min-width:220px;">
+          <div class="editor-actions">
+            <button class="save" id="btn-save" title="Save (Ctrl+S)">&#x1f4be; Save</button>
+            <button class="delete-btn" id="btn-delete" title="Delete">&#x1f5d1;</button>
+          </div>
+        </div>
+        <div class="code-editor" id="code-editor-container">
+          <button class="copy-btn" id="btn-copy" title="Copy to clipboard">&#x1f4cb; Copy</button>
+          <textarea id="edit-code" placeholder="// Paste or type your code here..." spellcheck="false"></textarea>
+        </div>
+      </div>
+    </div>
+  </div>
+</aside>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<!-- Import Modal -->
+<div class="modal-overlay" id="import-modal" style="display:none;">
+  <div class="modal">
+    <h2>&#x1f4e5; Import Snippets</h2>
+    <p style="font-size:13px;color:var(--text-muted);margin-bottom:12px;">Paste JSON export data below. Duplicate IDs will be skipped.</p>
+    <textarea id="import-data" placeholder='{"snippets": [...]}'></textarea>
+    <div class="modal-actions">
+      <button id="btn-import-cancel">Cancel</button>
+      <button class="primary" id="btn-import-confirm">Import</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ─── State ────────────────────────────────────────────────────────────────────
+let snippets = [];
+let activeSnippetId = null;
+let activeTag = null;
+let editingNew = false;
+
+const API = '/api/snippets';
+
+// ─── DOM refs ─────────────────────────────────────────────────────────────────
+const $list = document.getElementById('snippet-list');
+const $detail = document.getElementById('detail-panel');
+const $empty = document.getElementById('empty-state');
+const $editor = document.getElementById('editor');
+const $search = document.getElementById('search-input');
+const $count = document.getElementById('count-label');
+const $toast = document.getElementById('toast');
+const $tags = document.getElementById('tag-filter-list');
+const $stats = document.getElementById('stats-box');
+
+// ─── Toast ────────────────────────────────────────────────────────────────────
+let toastTimer;
+function toast(msg, type = '') {
+  $toast.textContent = msg;
+  $toast.className = 'toast show ' + type;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => $toast.className = 'toast', 2500);
+}
+
+// ─── Fetch ────────────────────────────────────────────────────────────────────
+async function api(url, opts = {}) {
+  const res = await fetch(url, opts);
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ error: res.statusText }));
+    throw new Error(err.error || 'Request failed');
+  }
+  return res.json();
+}
+
+// ─── Render ───────────────────────────────────────────────────────────────────
+
+function renderList(filtered = null) {
+  const list = filtered || snippets;
+  $count.textContent = `${list.length} snippet${list.length !== 1 ? 's' : ''}`;
+
+  if (list.length === 0) {
+    $list.innerHTML = `<div class="empty-state" style="padding:30px;"><p>No snippets found.</p></div>`;
+    return;
+  }
+
+  $list.innerHTML = list.map(s => {
+    const active = s.id === activeSnippetId ? ' active' : '';
+    const preview = s.code.replace(/\n/g, ' ').substring(0, 60);
+    return `
+      <div class="snippet-item${active}" data-id="${s.id}">
+        <div class="title">${esc(s.title)}</div>
+        <div class="meta">
+          <span class="lang-badge">${esc(s.language)}</span>
+          ${s.tags.map(t => `<span class="tag-chip">${esc(t)}</span>`).join('')}
+        </div>
+        <div class="preview">${esc(preview)}</div>
+      </div>`;
+  }).join('');
+}
+
+function renderDetail(snippet) {
+  $empty.style.display = 'none';
+  $editor.style.display = 'flex';
+  document.getElementById('edit-title').value = snippet.title;
+  document.getElementById('edit-code').value = snippet.code;
+  document.getElementById('edit-language').value = snippet.language || 'plaintext';
+  document.getElementById('edit-tags').value = (snippet.tags || []).join(', ');
+  editingNew = false;
+}
+
+function renderNew() {
+  $empty.style.display = 'none';
+  $editor.style.display = 'flex';
+  document.getElementById('edit-title').value = '';
+  document.getElementById('edit-code').value = '';
+  document.getElementById('edit-language').value = 'plaintext';
+  document.getElementById('edit-tags').value = '';
+  activeSnippetId = null;
+  editingNew = true;
+  // Remove active from list items
+  document.querySelectorAll('.snippet-item.active').forEach(el => el.classList.remove('active'));
+}
+
+function renderTags() {
+  const allTags = new Set();
+  snippets.forEach(s => s.tags.forEach(t => allTags.add(t)));
+  const sorted = [...allTags].sort();
+  $tags.innerHTML = sorted.map(t => {
+    const active = t === activeTag ? ' active' : '';
+    return `<span class="tag-chip${active}" data-tag="${esc(t)}">${esc(t)}</span>`;
+  }).join('');
+}
+
+function renderStats() {
+  fetch('/api/stats').then(data => {
+    const langs = Object.entries(data.languages || {}).sort((a,b) => b[1] - a[1]).slice(0, 8);
+    $stats.innerHTML = `
+      <div><strong>${data.total}</strong> total snippets</div>
+      ${langs.map(([l, c]) => `<div><strong>${c}</strong> ${esc(l)}</div>`).join('')}
+    `;
+  }).catch(() => {});
+}
+
+// ─── Load ─────────────────────────────────────────────────────────────────────
+
+async function loadSnippets() {
+  const q = $search.value.trim();
+  let url = API;
+  const params = [];
+  if (q) params.push(`q=${encodeURIComponent(q)}`);
+  if (activeTag) params.push(`tag=${encodeURIComponent(activeTag)}`);
+  if (params.length) url += '/search?' + params.join('&');
+  else if (activeTag) url += `?tag=${encodeURIComponent(activeTag)}`;
+  snippets = await api(url);
+  renderList();
+  renderTags();
+  renderStats();
+
+  // If we had an active snippet, try to keep it selected
+  if (activeSnippetId) {
+    const found = snippets.find(s => s.id === activeSnippetId);
+    if (found) renderDetail(found);
+  }
+}
+
+// ─── Save ─────────────────────────────────────────────────────────────────────
+
+async function saveCurrent() {
+  const title = document.getElementById('edit-title').value.trim();
+  const code = document.getElementById('edit-code').value;
+  const language = document.getElementById('edit-language').value;
+  const tags = document.getElementById('edit-tags').value
+    .split(',').map(t => t.trim()).filter(Boolean);
+
+  if (!title || !code) {
+    toast('Title and code are required.', 'error');
+    return;
+  }
+
+  const body = { title, code, language, tags };
+
+  try {
+    if (editingNew) {
+      const created = await api(API, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      });
+      await loadSnippets();
+      activeSnippetId = created.id;
+      editingNew = false;
+      renderDetail(created);
+      toast('Snippet created!', 'success');
+    } else {
+      await api(`${API}/${activeSnippetId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      });
+      await loadSnippets();
+      toast('Snippet saved!', 'success');
+    }
+  } catch (e) {
+    toast('Error: ' + e.message, 'error');
+  }
+}
+
+async function deleteCurrent() {
+  if (!activeSnippetId) return;
+  if (!confirm('Delete this snippet? This cannot be undone.')) return;
+
+  try {
+    await api(`${API}/${activeSnippetId}`, { method: 'DELETE' });
+    activeSnippetId = null;
+    await loadSnippets();
+    $empty.style.display = 'flex';
+    $editor.style.display = 'none';
+    toast('Snippet deleted.', 'success');
+  } catch (e) {
+    toast('Error: ' + e.message, 'error');
+  }
+}
+
+// ─── Export / Import ──────────────────────────────────────────────────────────
+
+async function exportSnippets() {
+  const data = await api('/api/export');
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `snippetvault-export-${new Date().toISOString().slice(0,10)}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+  toast('Exported!', 'success');
+}
+
+async function importSnippets() {
+  const raw = document.getElementById('import-data').value.trim();
+  if (!raw) return;
+  try {
+    const data = JSON.parse(raw);
+    const result = await api('/api/import', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    });
+    document.getElementById('import-modal').style.display = 'none';
+    await loadSnippets();
+    toast(`Imported ${result.imported} snippet${result.imported !== 1 ? 's' : ''}!`, 'success');
+  } catch (e) {
+    toast('Invalid JSON or import error: ' + e.message, 'error');
+  }
+}
+
+// ─── Copy ─────────────────────────────────────────────────────────────────────
+
+async function copyCode() {
+  const code = document.getElementById('edit-code').value;
+  await navigator.clipboard.writeText(code);
+  const btn = document.getElementById('btn-copy');
+  btn.textContent = '✓ Copied!';
+  btn.classList.add('copied');
+  toast('Copied to clipboard!', 'success');
+  setTimeout(() => {
+    btn.textContent = '📋 Copy';
+    btn.classList.remove('copied');
+  }, 2000);
+}
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+function esc(s) {
+  const d = document.createElement('div');
+  d.textContent = s;
+  return d.innerHTML;
+}
+
+// ─── Events ───────────────────────────────────────────────────────────────────
+
+// Search
+let searchTimeout;
+$search.addEventListener('input', () => {
+  clearTimeout(searchTimeout);
+  searchTimeout = setTimeout(loadSnippets, 250);
+});
+
+// Click on list item
+$list.addEventListener('click', (e) => {
+  const item = e.target.closest('.snippet-item');
+  if (!item) return;
+  const id = item.dataset.id;
+  const snippet = snippets.find(s => s.id === id);
+  if (snippet) {
+    activeSnippetId = id;
+    renderDetail(snippet);
+    document.querySelectorAll('.snippet-item.active').forEach(el => el.classList.remove('active'));
+    item.classList.add('active');
+  }
+});
+
+// Tag filter
+$tags.addEventListener('click', (e) => {
+  const chip = e.target.closest('.tag-chip');
+  if (!chip) return;
+  const tag = chip.dataset.tag;
+  if (activeTag === tag) {
+    activeTag = null;
+  } else {
+    activeTag = tag;
+  }
+  loadSnippets();
+});
+
+// Buttons
+document.getElementById('btn-new').addEventListener('click', renderNew);
+document.getElementById('btn-new-top').addEventListener('click', renderNew);
+document.getElementById('btn-save').addEventListener('click', saveCurrent);
+document.getElementById('btn-delete').addEventListener('click', deleteCurrent);
+document.getElementById('btn-all-snippets').addEventListener('click', () => {
+  activeTag = null;
+  $search.value = '';
+  loadSnippets();
+});
+document.getElementById('btn-copy').addEventListener('click', copyCode);
+document.getElementById('btn-export').addEventListener('click', exportSnippets);
+
+document.getElementById('btn-import').addEventListener('click', () => {
+  document.getElementById('import-modal').style.display = 'flex';
+  document.getElementById('import-data').value = '';
+});
+document.getElementById('btn-import-cancel').addEventListener('click', () => {
+  document.getElementById('import-modal').style.display = 'none';
+});
+document.getElementById('btn-import-confirm').addEventListener('click', importSnippets);
+
+// Keyboard shortcuts
+document.addEventListener('keydown', (e) => {
+  if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+    e.preventDefault();
+    saveCurrent();
+  }
+  if ((e.ctrlKey || e.metaKey) && e.key === 'n') {
+    e.preventDefault();
+    renderNew();
+  }
+});
+
+// Close import modal on overlay click
+document.getElementById('import-modal').addEventListener('click', (e) => {
+  if (e.target === e.currentTarget) {
+    document.getElementById('import-modal').style.display = 'none';
+  }
+});
+
+// ─── Init ─────────────────────────────────────────────────────────────────────
+loadSnippets();
+</script>
+</body>
+</html>
